@@ -1,12 +1,50 @@
-LeRobot: Microbot AI Tutorial & Guide
+<!-- LeRobot: Microbot AI Tutorial & Guide
 
 <div align="center">
 <a href="https://youtu.be/_bVuF3hhd80">
 <img src="https://img.youtube.com/vi/_bVuF3hhd80/0.jpg" alt="Microbot AI Tutorial">
 </a>
 <p><i>Watch Microbot in action: Learning to pick and place using end-to-end neural networks.</i></p>
+</div> -->
+
+# LeRobot: Microbot AI Tutorial & Guide
+
+<div align="center">
+  <a href="[https://youtu.be/_bVuF3hhd80](https://youtu.be/_bVuF3hhd80)">
+    <img src="[https://img.youtube.com/vi/_bVuF3hhd80/0.jpg](https://img.youtube.com/vi/_bVuF3hhd80/0.jpg)" alt="Microbot AI Tutorial">
+  </a>
+  <p><i>Watch Microbot in action: Learning to pick and place using end-to-end neural networks.</i></p>
 </div>
 
+### About Microbot
+**Microbot** is a 6-axis educational robot based on **Arduino UNO**, ideal for studying imitation learning and ROS. 
+- **Weight:** 1 kg
+- **Span:** 45 cm
+- **Control:** Joint angles are controlled and measured through **USB**.
+
+---
+
+## 🛠 Step-by-Step Workflow
+
+### 1. LeRobot Installation
+Follow these steps to set up your environment:
+
+- **Download:** Clone the repository from GitHub.
+- **Environment:** Create a dedicated Conda environment to avoid library conflicts.
+- **Installation:** Install the package in editable mode.
+
+```bash
+# Clone the repository
+git clone https://github.com/huggingface/lerobot.git
+cd lerobot
+
+# Create and activate a conda environment
+conda create -y -n lerobot python=3.10
+conda activate lerobot
+
+# Install the library
+pip install -e .
+```
 
 <p align="center">
   <img alt="LeRobot, Hugging Face Robotics Library" src="./media/readme/lerobot-logo-thumbnail.png" width="100%">
