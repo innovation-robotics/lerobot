@@ -88,7 +88,7 @@ If you need to manually push your files:
 
 ```bash
 hf auth login
-hf upload Sokrat2000/[YOUR_DATASET] . --repo-type=dataset
+hf upload [USER_NAME]/[YOUR_DATASET] . --repo-type=dataset
 ```
 
 ### 5. Tag the Dataset
