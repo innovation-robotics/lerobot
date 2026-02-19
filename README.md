@@ -10,8 +10,8 @@
 # LeRobot: Microbot AI Tutorial & Guide
 
 <div align="center">
-  <a href="[https://youtu.be/_bVuF3hhd80](https://youtu.be/_bVuF3hhd80)">
-    <img src="[https://img.youtube.com/vi/_bVuF3hhd80/0.jpg](https://img.youtube.com/vi/_bVuF3hhd80/0.jpg)" alt="Microbot AI Tutorial">
+  <a href="https://youtu.be/_bVuF3hhd80">
+    <img src="https://img.youtube.com/vi/_bVuF3hhd80/0.jpg" alt="Microbot AI Tutorial">
   </a>
   <p><i>Watch Microbot in action: Learning to pick and place using end-to-end neural networks.</i></p>
 </div>
@@ -45,6 +45,83 @@ conda activate lerobot
 # Install the library
 pip install -e .
 ```
+
+### 2. General Preparation
+
+**Grant permissions** for the robot's USB serial communication and identify your **camera index**:
+```bash
+# Grant serial permissions to the Arduino
+sudo chmod a+rw /dev/ttyACM0
+
+# Identify your robot camera index
+v4l2-ctl –list-devices
+```
+
+### 3. Dataset Recording
+
+Log in to **Hugging Face** and run the recording script. Replace [CAM_INDEX] and [REPO_ID] with your specific details.
+
+```bash
+hf auth login
+cd lerobot/src/lerobot
+
+python -m lerobot.scripts.lerobot_record \
+     --robot.type=microbot_follower_ik \
+     --robot.port=/dev/tty.usbmodem585A0076841 \
+     --robot.id=my_awesome_follower_arm \
+     --robot.cameras="{ front: {type: opencv, index_or_path: [CAM_INDEX], width: 640, height: 480, fps: 30}}" \
+     --teleop.type=keyboard_ee \
+     --display_data=true \
+     --dataset.repo_id=[REPO_ID] \
+     --dataset.num_episodes=180 \
+     --dataset.single_task="Grab the black cube" \
+     --dataset.fps=10 \
+     --dataset.push_to_hub=true
+```
+
+- **Example Repo ID:** david/pick_box
+- **Resume Recording:** To add more episodes to an existing dataset, add the option `--resume=true` at the end of the command.
+
+### 4. Upload the Dataset
+
+If you need to manually push your files:
+
+```bash
+hf auth login
+hf upload Sokrat2000/[YOUR_DATASET] . --repo-type=dataset
+```
+
+### 5. Tag the Dataset
+Run this script to ensure your dataset is recognized as **Version 3.0**: 
+[adjust_dataset_tag.py](https://github.com/innovation-robotics/lerobot/blob/main/src/lerobot/scripts/adjust_dataset_tag.py)
+
+### 6. Training
+
+Utilize **Kaggle** for training to take advantage of GPU acceleration:
+[Microbot Training Kaggle Notebook](https://github.com/innovation-robotics/lerobot/blob/main/microbot-training-kaggle.ipynb)
+just use **Save Version** and it will perform the training and once finished you can downloade the checkpoint through the **Output** Kaggle tab
+
+### 7. Evaluation
+
+After training and downloading the checkpoint, evaluate the policy on the Microbot robot:
+
+```bash
+python -m lerobot.scripts.lerobot_record \
+     --robot.type=microbot_follower_ik \
+     --robot.port=/dev/tty.usbmodem585A0076841 \
+     --robot.id=my_awesome_follower_arm \
+     --robot.cameras="{ front: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}" \
+     --display_data=true \
+     --dataset.repo_id=waly/eval_multiple_places \
+     --dataset.num_episodes=20 \
+     --dataset.single_task="Grab the black cube" \
+     --dataset.fps=10 \
+     --dataset.push_to_hub=false \
+     --dataset.episode_time_s=300 \
+     --policy.path=/home/ahmed-waly/Repos/lerobot/src/lerobot/outputs/train/multiple_places/checkpoints/100000/pretrained_model
+```
+
+
 
 <p align="center">
   <img alt="LeRobot, Hugging Face Robotics Library" src="./media/readme/lerobot-logo-thumbnail.png" width="100%">
