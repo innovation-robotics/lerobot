@@ -1,3 +1,12 @@
+LeRobot: Microbot AI Tutorial & Guide
+
+<div align="center">
+<a href="https://youtu.be/_bVuF3hhd80">
+<img src="https://img.youtube.com/vi/_bVuF3hhd80/0.jpg" alt="Microbot AI Tutorial">
+</a>
+<p><i>Watch Microbot in action: Learning to pick and place using end-to-end neural networks.</i></p>
+</div>
+
 <p align="center">
   <img alt="LeRobot, Hugging Face Robotics Library" src="./media/readme/lerobot-logo-thumbnail.png" width="100%">
 </p>
