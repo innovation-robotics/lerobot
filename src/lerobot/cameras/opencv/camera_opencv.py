@@ -488,7 +488,7 @@ class OpenCVCamera(Camera):
             self.new_frame_event.clear()
 
     @check_if_not_connected
-    def async_read(self, timeout_ms: float = 200) -> NDArray[Any]:
+    def async_read(self, timeout_ms: float = 200000) -> NDArray[Any]:
         """
         Reads the latest available frame asynchronously.
 
@@ -530,7 +530,7 @@ class OpenCVCamera(Camera):
         return frame
 
     @check_if_not_connected
-    def read_latest(self, max_age_ms: int = 500) -> NDArray[Any]:
+    def read_latest(self, max_age_ms: int = 1000) -> NDArray[Any]:
         """Return the most recent frame captured immediately (Peeking).
 
         This method is non-blocking and returns whatever is currently in the

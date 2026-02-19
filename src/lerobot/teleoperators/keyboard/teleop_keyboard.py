@@ -29,6 +29,7 @@ from ..utils import TeleopEvents
 from .configuration_keyboard import (
     KeyboardEndEffectorTeleopConfig,
     KeyboardRoverTeleopConfig,
+    KeyboardEndEffectorTeleopConfig2,
     KeyboardTeleopConfig,
 )
 
@@ -48,6 +49,17 @@ except Exception as e:
     logging.info(f"Could not import pynput: {e}")
 
 
+key_map = {
+    keyboard.Key.home: 1,      # Up arrow key
+    keyboard.Key.end: 2,    # Down arrow key
+    keyboard.Key.delete: 3,    # Left arrow key
+    keyboard.Key.page_down: 4,   # Right arrow key
+    keyboard.Key.f1: 5,      # Up arrow key
+    keyboard.Key.f2: 6,    # Down arrow key
+    keyboard.Key.f3: 7,    # gripper open
+    keyboard.Key.f4: 8,   # gripper close
+}
+
 class KeyboardTeleop(Teleoperator):
     """
     Teleop class to use keyboard inputs for control.
@@ -65,6 +77,7 @@ class KeyboardTeleop(Teleoperator):
         self.current_pressed = {}
         self.listener = None
         self.logs = {}
+        self.current_key = None
 
     @property
     def action_features(self) -> dict:
@@ -171,40 +184,65 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
                 "names": {"delta_x": 0, "delta_y": 1, "delta_z": 2},
             }
 
-    @check_if_not_connected
-    def get_action(self) -> RobotAction:
-        self._drain_pressed_keys()
+    def _on_press(self, key):
+        # if hasattr(key, "char"):
+        #     key = key.char
+        # self.event_queue.put((key, True))
+        self.current_key = key
+
+    def _on_release(self, key):
+        # if hasattr(key, "char"):
+        #     key = key.char
+        # self.event_queue.put((key, False))
+        self.current_key = None
+
+    def get_action(self) -> dict[str, Any]:
+        if not self.is_connected:
+            raise DeviceNotConnectedError(
+                "KeyboardTeleop is not connected. You need to run `connect()` before `get_action()`."
+            )
+
+        # self._drain_pressed_keys()
         delta_x = 0.0
         delta_y = 0.0
         delta_z = 0.0
         gripper_action = 1.0
 
         # Generate action based on current key states
-        for key, val in self.current_pressed.items():
-            if key == keyboard.Key.up:
-                delta_y = -int(val)
-            elif key == keyboard.Key.down:
-                delta_y = int(val)
-            elif key == keyboard.Key.left:
-                delta_x = int(val)
-            elif key == keyboard.Key.right:
-                delta_x = -int(val)
-            elif key == keyboard.Key.shift:
-                delta_z = -int(val)
-            elif key == keyboard.Key.shift_r:
-                delta_z = int(val)
-            elif key == keyboard.Key.ctrl_r:
-                # Gripper actions are expected to be between 0 (close), 1 (stay), 2 (open)
-                gripper_action = int(val) + 1
-            elif key == keyboard.Key.ctrl_l:
-                gripper_action = int(val) - 1
-            elif val:
-                # If the key is pressed, add it to the misc_keys_queue
-                # this will record key presses that are not part of the delta_x, delta_y, delta_z
-                # this is useful for retrieving other events like interventions for RL, episode success, etc.
-                self.misc_keys_queue.put(key)
+        # for key, val in self.current_pressed.items():
+        key = self.current_key
+        val = 1.0
 
-        self.current_pressed.clear()
+        if key == keyboard.Key.page_down:
+            delta_y = float(val)
+        elif key == keyboard.Key.delete:
+            delta_y = -float(val)
+        # elif key == keyboard.Key.left:
+        #     delta_x = int(val)
+        # elif key == keyboard.Key.right:
+        #     delta_x = -int(val)
+
+        elif key == keyboard.Key.home:
+            delta_x = -float(val)
+        elif key == keyboard.Key.end:
+            delta_x = float(val)
+
+        elif key == keyboard.Key.f1:
+            delta_z = float(val)
+        elif key == keyboard.Key.f2:
+            delta_z = -float(val)
+        elif key == keyboard.Key.f3:
+            # Gripper actions are expected to be between 0 (close), 1 (stay), 2 (open)
+            gripper_action = float(val) + 1.0
+        elif key == keyboard.Key.f4:
+            gripper_action = float(val) - 1.0
+        # elif val:
+            # If the key is pressed, add it to the misc_keys_queue
+            # this will record key presses that are not part of the delta_x, delta_y, delta_z
+            # this is useful for retrieving other events like interventions for RL, episode success, etc.
+        #     self.misc_keys_queue.put(key)
+
+        # self.current_pressed.clear()
 
         action_dict = {
             "delta_x": delta_x,
@@ -214,6 +252,145 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
 
         if self.config.use_gripper:
             action_dict["gripper"] = gripper_action
+
+        return action_dict
+
+# class KeyboardEndEffectorTeleop2(KeyboardTeleop):
+#     """
+#     Teleop class to use keyboard inputs for end effector control.
+#     Designed to be used with the `So100FollowerEndEffector` robot.
+#     """
+
+#     config_class = KeyboardEndEffectorTeleopConfig2
+#     name = "keyboard_ee2"
+
+#     def __init__(self, config: KeyboardEndEffectorTeleopConfig2):
+#         super().__init__(config)
+#         self.config = config
+#         self.misc_keys_queue = Queue()
+
+#     @property
+#     def action_features(self) -> dict:
+#         return {
+#             "dtype": "float32",
+#             "shape": (4,),
+#             "names": {"delta_x": 0, "delta_y": 1, "delta_z": 2, "gripper": 3},
+#         }
+
+#     def _on_press(self, key):
+#         if hasattr(key, "char"):
+#             key = key.char
+#         self.event_queue.put((key, True))
+
+#     def _on_release(self, key):
+#         if hasattr(key, "char"):
+#             key = key.char
+#         self.event_queue.put((key, False))
+
+#     def get_action(self) -> dict[str, Any]:
+#         if not self.is_connected:
+#             raise DeviceNotConnectedError(
+#                 "KeyboardTeleop is not connected. You need to run `connect()` before `get_action()`."
+#             )
+
+#         self._drain_pressed_keys()
+
+#         key_to_send = 0  # Default to stop
+        
+#         for key, val in self.current_pressed.items():
+#             if key in key_map:
+#                 key_to_send = key_map[key]
+
+#         self.current_pressed.clear()
+
+#         action_dict = {
+#             "action": key_to_send,
+#         }
+
+#         return action_dict
+
+class KeyboardEndEffectorTeleop2(KeyboardTeleop):
+    """
+    Teleop class to use keyboard inputs for end effector control.
+    Designed to be used with the `So100FollowerEndEffector` robot.
+    """
+
+    config_class = KeyboardEndEffectorTeleopConfig2
+    name = "keyboard_ee2"
+
+    def __init__(self, config: KeyboardEndEffectorTeleopConfig2):
+        super().__init__(config)
+        self.config = config
+        self.misc_keys_queue = Queue()
+
+    @property
+    def action_features(self) -> dict:
+        if self.config.use_gripper:
+            return {
+                "dtype": "float32",
+                "shape": (4,),
+                "names": {"speed_x": 0, "speed_y": 1, "speed_z": 2, "speed_gripper": 3},
+            }
+        else:
+            return {
+                "dtype": "float32",
+                "shape": (3,),
+                "names": {"speed_x": 0, "speed_y": 1, "speed_z": 2},
+            }
+
+    def _on_press(self, key):
+        if hasattr(key, "char"):
+            key = key.char
+        self.event_queue.put((key, True))
+
+    def _on_release(self, key):
+        if hasattr(key, "char"):
+            key = key.char
+        self.event_queue.put((key, False))
+
+    def get_action(self) -> dict[str, Any]:
+        if not self.is_connected:
+            raise DeviceNotConnectedError(
+                "KeyboardTeleop is not connected. You need to run `connect()` before `get_action()`."
+            )
+
+        self._drain_pressed_keys()
+        delta_x = 0.0
+        delta_y = 0.0
+        delta_z = 0.0
+        gripper_action = 0.0
+
+        # Generate action based on current key states
+        for key, val in self.current_pressed.items():
+            if key == keyboard.Key.page_down:
+                delta_x = float(val)
+            elif key == keyboard.Key.delete:
+                delta_x = -float(val)
+            elif key == keyboard.Key.home:
+                delta_y = -float(val)
+            elif key == keyboard.Key.end:
+                delta_y = float(val)
+            elif key == keyboard.Key.f1:
+                delta_z = float(val)
+            elif key == keyboard.Key.f2:
+                delta_z = -float(val)
+            elif key == keyboard.Key.f3:
+                gripper_action = float(val)
+            elif key == keyboard.Key.f4:
+                gripper_action = -float(val)
+            elif val:
+                self.misc_keys_queue.put(key)
+
+        self.current_pressed.clear()
+
+        action_dict = {
+            "speed_x": delta_x,
+            "speed_y": delta_y,
+            "speed_z": delta_z,
+        }
+
+        if self.config.use_gripper:
+            action_dict["speed_gripper"] = gripper_action
 
         return action_dict
 

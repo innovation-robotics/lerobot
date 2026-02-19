@@ -177,3 +177,11 @@ outputs/
 *.urdf
 *.xml
 *.part
+dataset_heartbeat.txt
+dataset_heartbeat1.txt
+full_dataset_inspect.txt
+tests3.py
+urdf_viewer.py
+urdf_viewer2.py
+tests2.py
+src/lerobot/log_args.txt

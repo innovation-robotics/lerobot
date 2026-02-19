@@ -13,6 +13,9 @@
 # limitations under the License.
 
 import numpy as np
+import numpy as np
+from placo_utils.visualization import robot_viz, robot_frame_viz, frame_viz
+from placo_utils.tf import tf
 
 
 class RobotKinematics:
@@ -51,6 +54,7 @@ class RobotKinematics:
 
         # Initialize frame task for IK
         self.tip_frame = self.solver.add_frame_task(self.target_frame_name, np.eye(4))
+        self.viz = robot_viz(self.robot)
 
     def forward_kinematics(self, joint_pos_deg: np.ndarray) -> np.ndarray:
         """
@@ -73,6 +77,7 @@ class RobotKinematics:
         # Update kinematics
         self.robot.update_kinematics()
 
+
         # Get the transformation matrix
         return self.robot.get_T_world_frame(self.target_frame_name)
 
@@ -81,7 +86,7 @@ class RobotKinematics:
         current_joint_pos: np.ndarray,
         desired_ee_pose: np.ndarray,
         position_weight: float = 1.0,
-        orientation_weight: float = 0.01,
+        orientation_weight: float = 0.0,
     ) -> np.ndarray:
         """
         Compute inverse kinematics using placo solver.
@@ -112,6 +117,11 @@ class RobotKinematics:
         # Solve IK
         self.solver.solve(True)
         self.robot.update_kinematics()
+
+        # # Displaying the robot, effector and target
+        # self.viz.display(self.robot.state.q)
+        # robot_frame_viz(self.robot, "wrist")
+        # frame_viz("target", self.tip_frame.T_world_frame)
 
         # Extract joint positions
         joint_pos_rad = []

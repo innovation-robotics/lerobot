@@ -46,7 +46,7 @@ def get_cli_overrides(field_name: str, args: Sequence[str] | None = None) -> lis
         args = sys.argv[1:]
     attr_level_args = []
     detect_string = f"--{field_name}."
-    exclude_strings = (f"--{field_name}.{draccus.CHOICE_TYPE_KEY}=", f"--{field_name}.{PATH_KEY}=")
+    exclude_strings = (f"--{field_name}.{draccus.CHOICE_TYPE_KEY}=", f"--{field_name}.{PATH_KEY}=", f"--{field_name}.{PATH_KEY}")
     for arg in args:
         if arg.startswith(detect_string) and not arg.startswith(exclude_strings):
             denested_arg = f"--{arg.removeprefix(detect_string)}"
@@ -62,6 +62,12 @@ def parse_arg(arg_name: str, args: Sequence[str] | None = None) -> str | None:
     for arg in args:
         if arg.startswith(prefix):
             return arg[len(prefix) :]
+        
+    prefix2 = f"--{arg_name}"
+    for i,arg in enumerate(args):
+        if arg.startswith(prefix2):
+            return args[i+1]
+
     return None
 
 
@@ -178,8 +184,12 @@ def filter_path_args(fields_to_filter: str | list[str], args: Sequence[str] | No
     if isinstance(fields_to_filter, str):
         fields_to_filter = [fields_to_filter]
 
-    filtered_args = [] if args is None else list(args)
+    using_terminal = False
 
+    if "=" in args[0]:
+        using_terminal = True
+
+    filtered_args = args
     for field in fields_to_filter:
         if get_path_arg(field, args):
             if get_type_arg(field, args):
@@ -187,7 +197,16 @@ def filter_path_args(fields_to_filter: str | list[str], args: Sequence[str] | No
                     argument=None,
                     message=f"Cannot specify both --{field}.{PATH_KEY} and --{field}.{draccus.CHOICE_TYPE_KEY}",
                 )
-            filtered_args = [arg for arg in filtered_args if not arg.startswith(f"--{field}.")]
+            if using_terminal:
+                filtered_args = [arg for arg in filtered_args if not arg.startswith(f"--{field}.")]
+            else:
+                x = [True for _ in range(len(filtered_args))]
+                for i, my_arg in enumerate(filtered_args):
+                    if my_arg.startswith(f"--{field}.") and x[i]==True:
+                        x[i] = False
+                        x[i+1] = False
+                
+                filtered_args = [arg for i,arg in enumerate(filtered_args) if x[i]==True]
 
     return filtered_args
 
@@ -229,7 +248,13 @@ def wrap(config_path: Path | None = None) -> Callable[[F], F]:
                     cli_args = filter_arg("config_path", cli_args)
                     cfg = argtype.from_pretrained(config_path_cli, cli_args=cli_args)
                 else:
-                    cfg = draccus.parse(config_class=argtype, config_path=config_path, args=cli_args)
+                    try:
+                        cfg = draccus.parse(config_class=argtype, config_path=config_path, args=cli_args)
+                    except Exception as e:
+                        # print(e)
+                        import traceback
+                        traceback.print_exc() # This will tell you EXACTLY which argument is broken
+
             response = fn(cfg, *args, **kwargs)
             return response
 

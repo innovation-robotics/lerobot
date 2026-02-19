@@ -68,6 +68,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from pprint import pformat
 from typing import Any
+import shutil
+import os
 
 from lerobot.cameras import (  # noqa: F401
     CameraConfig,  # noqa: F401
@@ -109,6 +111,7 @@ from lerobot.robots import (  # noqa: F401
     reachy2,
     so_follower,
     unitree_g1 as unitree_g1_robot,
+    microbot_follower,
 )
 from lerobot.teleoperators import (  # noqa: F401
     Teleoperator,
@@ -388,24 +391,17 @@ def record_loop(
 
         # Write to dataset
         if dataset is not None:
-            action_frame = build_dataset_frame(dataset.features, action_values, prefix=ACTION)
+            action_frame = build_dataset_frame(dataset.features, _sent_action, prefix=ACTION)
             frame = {**observation_frame, **action_frame, "task": single_task}
             dataset.add_frame(frame)
 
         if display_data:
             log_rerun_data(
-                observation=obs_processed, action=action_values, compress_images=display_compressed_images
+                observation=obs_processed, action=_sent_action, compress_images=display_compressed_images
             )
 
         dt_s = time.perf_counter() - start_loop_t
-
-        sleep_time_s: float = 1 / fps - dt_s
-        if sleep_time_s < 0:
-            logging.warning(
-                f"Record loop is running slower ({1 / dt_s:.1f} Hz) than the target FPS ({fps} Hz). Dataset frames might be dropped and robot control might be unstable. Common causes are: 1) Camera FPS not keeping up 2) Policy inference taking too long 3) CPU starvation"
-            )
-
-        precise_sleep(max(sleep_time_s, 0.0))
+        precise_sleep(max(1 / fps - dt_s, 0.0))
 
         timestamp = time.perf_counter() - start_episode_t
 
@@ -527,7 +523,7 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
                     log_say("Reset the environment", cfg.play_sounds)
 
                     # reset g1 robot
-                    if robot.name == "unitree_g1":
+                    if robot.name == "unitree_g1" or robot.name == "microbot_follower_ik":
                         robot.reset()
 
                     record_loop(
@@ -579,4 +575,5 @@ def main():
 
 
 if __name__ == "__main__":
+    # shutil.rmtree("/home/ahmed-waly/.cache/huggingface/lerobot/waly/new_home_adaptation2")
     main()

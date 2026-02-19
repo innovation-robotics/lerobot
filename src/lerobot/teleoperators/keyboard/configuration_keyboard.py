@@ -41,6 +41,11 @@ class KeyboardEndEffectorTeleopConfig(KeyboardTeleopConfig):
 
     use_gripper: bool = True
 
+@TeleoperatorConfig.register_subclass("keyboard_ee2")
+@dataclass
+class KeyboardEndEffectorTeleopConfig2(KeyboardTeleopConfig):
+    use_gripper: bool = True
+
 
 @TeleoperatorConfig.register_subclass("keyboard_rover")
 @dataclass

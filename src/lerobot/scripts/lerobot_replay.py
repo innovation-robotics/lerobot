@@ -22,7 +22,7 @@ lerobot-replay \
     --robot.type=so100_follower \
     --robot.port=/dev/tty.usbmodem58760431541 \
     --robot.id=black \
-    --dataset.repo_id=<USER>/record-test \
+    --dataset.repo_id=aliberts/record-test \
     --dataset.episode=0
 ```
 
@@ -64,6 +64,7 @@ from lerobot.robots import (  # noqa: F401
     reachy2,
     so_follower,
     unitree_g1,
+    microbot_follower
 )
 from lerobot.utils.constants import ACTION
 from lerobot.utils.import_utils import register_third_party_plugins
